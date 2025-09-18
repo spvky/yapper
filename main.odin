@@ -1,18 +1,18 @@
 package main
 
-import "core:math"
-import "core:strings"
 import "core:fmt"
+import "core:math"
 import "core:os"
 import "core:slice"
+import "core:strings"
 import rl "vendor:raylib"
 
 DialogueConfig :: struct {
-	speed:          f32,
-	font_size:      i32,
-	line_width:     int,
-	max_lines:      int,
-	color:          rl.Color,
+	speed:      f32,
+	font_size:  i32,
+	line_width: int,
+	max_lines:  int,
+	color:      rl.Color,
 	// render_surface: rl.RenderTexture,
 }
 
@@ -23,18 +23,6 @@ DialogueWriter :: struct {
 	data:            []byte,
 	character_index: int,
 	timer:           f32,
-}
-
-init_dialogue :: proc(config: DialogueConfig) {
-	context.user_ptr = nil
-	cfg := new(DialogueConfig)
-	cfg.speed = config.speed
-	cfg.font_size = config.font_size
-	cfg.line_width = config.line_width
-	cfg.max_lines = config.max_lines
-	cfg.color = config.color
-	// cfg.render_surface = config.render_surface
-	context.user_ptr = &cfg
 }
 
 // Creates a dialogue writer containing the bytes from the given file, using the passed config
@@ -67,26 +55,31 @@ render_writer :: proc(w: DialogueWriter) {
 }
 
 main :: proc() {
-	rl.InitWindow(1600,900,"text")
+	rl.InitWindow(1600, 900, "text")
 
 	writer_config := DialogueConfig {
-		speed = 0.1,
-		font_size = 16,
+		speed      = 0.1,
+		font_size  = 16,
 		line_width = 10,
-		max_lines = 4,
-		color = rl.WHITE
+		max_lines  = 4,
+		color      = rl.WHITE,
 	}
 
-	writer :=create_writer( writer_config, "./test.txt")
+	writer := create_writer(writer_config, "./test.txt")
 
 	for !rl.WindowShouldClose() {
 		frametime := rl.GetFrameTime()
 		advance_writer(&writer, frametime)
 		string_to_draw := writer_text(writer)
-		
+		full_string := string(writer.data[:])
+		converted_string := strings.clone_to_cstring(string_to_draw)
+		full_converted_string := strings.clone_to_cstring(full_string)
+		text_length = rl.TextLength(full_converted_string)
+
+		rl.TextLength()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
-		rl.DrawText(strings.clone_to_cstring(string_to_draw), 0,0, writer.config.font_size, writer.config.color)
+		rl.DrawText(converted_string, 0, 0, writer.config.font_size, writer.config.color)
 		rl.EndDrawing()
 	}
 
