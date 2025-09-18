@@ -13,7 +13,7 @@ DialogueConfig :: struct {
 	line_width: int,
 	max_lines:  int,
 	color:      rl.Color,
-	// render_surface: rl.RenderTexture,
+	render_surface: rl.RenderTexture,
 }
 
 // Struct for rendering dialogue boxes (using raylib)
@@ -29,6 +29,13 @@ DialogueWriter :: struct {
 create_writer :: proc(config: DialogueConfig, filename: string) -> DialogueWriter {
 	data, ok := os.read_entire_file(filename)
 	return DialogueWriter{config = config, data = data}
+}
+
+reload_writer :: proc(w: ^DialogueWriter) {
+	w.timer = 0
+	w.character_index = 0
+	w.writing = false
+	// load file here
 }
 
 destroy_writer :: proc(w: DialogueWriter) {
@@ -49,9 +56,17 @@ writer_text :: proc(w: DialogueWriter) -> string {
 }
 
 render_writer :: proc(w: DialogueWriter) {
-	// rl.BeginTextureMode(w.config.render_surface)
-	// // Writing the currently displayable text goes here
-	// rl.EndTextureMode()
+	rl.BeginTextureMode(w.config.render_surface)
+	y_offset, x_offset : i32
+	start_line, end_line := -1, -1
+	for c, i in w.data[:w.character_index] {
+		byte_count : i32= 0
+		character_string := fmt.tprintf("%v")
+		codepoint := rl.GetCodepoint(strings.clone_to_cstring(string(c)), &byte_count)
+		// rl.DrawTextCodepoint()
+
+	}
+	rl.EndTextureMode()
 }
 
 main :: proc() {
@@ -74,9 +89,8 @@ main :: proc() {
 		full_string := string(writer.data[:])
 		converted_string := strings.clone_to_cstring(string_to_draw)
 		full_converted_string := strings.clone_to_cstring(full_string)
-		text_length = rl.TextLength(full_converted_string)
+		text_length := rl.TextLength(full_converted_string)
 
-		rl.TextLength()
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
 		rl.DrawText(converted_string, 0, 0, writer.config.font_size, writer.config.color)
@@ -84,15 +98,4 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
-	// data, ok := os.read_entire_file("./test.txt")
-	// spaces := make([dynamic]int,0,16)
-	// for d,i in data {
-	// 	if rune(d) == ' ' {
-	// 		append(&spaces, i)
-	// 	}
-	// }
-	// if ok {
-	// 	fmt.printf("%v\n%v", string(data[0:10]), string(data[10:24]))
-	// 	fmt.printf("%v", spaces)
-	// }
 }
