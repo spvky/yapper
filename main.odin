@@ -9,11 +9,17 @@ import rl "vendor:raylib"
 
 DialogueConfig :: struct {
 	speed:      f32,
-	font_size:  i32,
+	font_size:  f32,
 	line_width: int,
 	max_lines:  int,
 	color:      rl.Color,
-	render_surface: rl.RenderTexture,
+	kerning:    f32,
+	// render_surface: rl.RenderTexture,
+}
+
+Word :: struct {
+	start_index: int,
+	length:      int,
 }
 
 // Struct for rendering dialogue boxes (using raylib)
@@ -56,28 +62,38 @@ writer_text :: proc(w: DialogueWriter) -> string {
 }
 
 render_writer :: proc(w: DialogueWriter) {
-	rl.BeginTextureMode(w.config.render_surface)
-	y_offset, x_offset : i32
+	time := rl.GetTime()
+	font := rl.GetFontDefault()
+	scale_factor := w.config.font_size / f32(font.baseSize)
+	// rl.BeginTextureMode(w.config.render_surface)
+	y_offset, x_offset: f32
 	start_line, end_line := -1, -1
 	for c, i in w.data[:w.character_index] {
-		byte_count : i32= 0
-		character_string := fmt.tprintf("%v")
-		codepoint := rl.GetCodepoint(strings.clone_to_cstring(string(c)), &byte_count)
-		// rl.DrawTextCodepoint()
-
+		x_offset = f32(i % 16) * 12
+		sin_value := f32(time) * 10
+		y_shift := f32(i / 16) * 16
+		y_offset = 2 * math.sin(sin_value + x_offset) + y_shift
+		byte_count: i32 = 0
+		letter := rune(c)
+		glyph_index := rl.GetGlyphIndex(font, letter)
+		glyph_width :=
+			(font.glyphs[glyph_index].advanceX == 0) ? font.recs[glyph_index].width * scale_factor : font.glyphs[index].advanceX * scale_factor
+		if (i != w.character_index) do glyph_width = glyph_width + spacing
+		rl.DrawTextCodepoint(font, letter, {x_offset, y_offset}, 16, rl.WHITE)
 	}
-	rl.EndTextureMode()
+	// rl.EndTextureMode()
 }
 
 main :: proc() {
 	rl.InitWindow(1600, 900, "text")
 
 	writer_config := DialogueConfig {
-		speed      = 0.1,
+		speed      = 0.05,
 		font_size  = 16,
 		line_width = 10,
 		max_lines  = 4,
 		color      = rl.WHITE,
+		kerning    = 2,
 	}
 
 	writer := create_writer(writer_config, "./test.txt")
@@ -85,15 +101,10 @@ main :: proc() {
 	for !rl.WindowShouldClose() {
 		frametime := rl.GetFrameTime()
 		advance_writer(&writer, frametime)
-		string_to_draw := writer_text(writer)
-		full_string := string(writer.data[:])
-		converted_string := strings.clone_to_cstring(string_to_draw)
-		full_converted_string := strings.clone_to_cstring(full_string)
-		text_length := rl.TextLength(full_converted_string)
 
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
-		rl.DrawText(converted_string, 0, 0, writer.config.font_size, writer.config.color)
+		render_writer(writer)
 		rl.EndDrawing()
 	}
 
